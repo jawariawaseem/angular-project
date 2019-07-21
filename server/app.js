@@ -16,18 +16,44 @@ mongoose.Promise = global.Promise;
 
 app.use(bodyParser.json());// paser all the requests that are going in and  out with json parser
 app.use(express.static(path.join(__dirname,'../dist')));
-
+//events listeners
 const server = require('http').Server(app);
 const io = require('socket.io')(server);
 
 io.on('connection', (socket) => {
-	console.log("new user connected");
-	socket.on('new message', (data) =>{
-		console.log(data);
-		socket.emit('message recieved', 'i am data from server..');
-	}); //listem to event
-});
+	let user = '';
 
+	socket.on('new message', (data) => {
+		const newMessage = new Message({
+			_id: mongoose.Types.ObjectId(),
+			message: data,
+			user: user
+		})
+		newMessage.save().then(rec => {
+			if(rec) {
+				io.emit('message recieved', rec)
+			} else {
+			}
+		})
+	}); //listen to event
+
+	socket.on('new user', (data) =>{
+		user = data;
+		console.log("new user connected");
+		socket.broadcast.emit('user connected', data); //sends message to all users except the newly connected
+		Message.find().then(rec => {
+			if(rec){
+				socket.emit('all messages', rec);
+			}
+			else{
+
+			}
+		});
+	});
+	socket.on('disconnect', (data) => {
+		socket.broadcast.emit('user disconnected', data);
+	});
+});
 
 const Message = require('./models/message');
 
@@ -44,7 +70,7 @@ app.get('/api/chat',(req, res) => {
 
 app.post('/api/chat',(req, res) => {
 	const newMessage = new Message({
-		_id: mongoose.Types.ObjectId,
+		_id: mongoose.Types.ObjectId(),
 		message: req.body.message,
 		user: 'user'
 	});

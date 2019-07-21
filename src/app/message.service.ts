@@ -10,25 +10,38 @@ export class MessageService {
 	_chats = [];
 	_chatssub;
 	socket; 
-	constructor(){
+	constructor() {
+		//events
 		this._chatssub = new Subject<any[]>();
 		this.socket = io.connect();
 		this.socket.on('connect', () => {
-			console.log('new user connected.....');
+			console.log('connected to the server');
 		});
-		this.socket.emit('new message', 'hey');
-		this.socket.on('message recieved', (data)=>{
-			console.log(data);
+		this.socket.on('message recieved', (data) => {
+			this._chats.push(data);
+			this._chatssub.next([...this._chats]);
 		});
 		this.socket.on('all messages', (data) => {
 			this._chats = [...data];
 			this._chatssub.next([...this._chats]);
 		});
+		this.socket.on('user connected', (data) => {
+			this._chats.push({message: `${data} connected`, type: 'notify'});
+			this._chatssub.next([...this._chats]);
+		});
+		this.socket.on('user disconnected', (data) => {
+			console.log(data);
+			this._chats.push({message: `${data} disconnected`, type: 'notify'});
+			this._chatssub.next([...this._chats]);
+		});
 	}
-	addchat(message){
+	addChat(message){
 		this.socket.emit('new message', message);
 	}
 	getChats(){
 		return this._chatssub.asObservable();
+	}
+	addUser(user){
+		this.socket.emit('new user', user);
 	}
 }
