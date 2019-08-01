@@ -14,7 +14,8 @@ export class AppComponent {
 	username;
 	constructor(private messageService: MessageService){
 		this.messageService.getChats().subscribe((data) => {
-			this.chats = data; 
+			this.chats = data;
+			console.log(data); 
 			window.setTimeout(() => {
 				const elem = document.getElementById('scrolldiv');
 				elem.scrollTop = elem.scrollHeight;

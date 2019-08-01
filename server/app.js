@@ -50,8 +50,8 @@ io.on('connection', (socket) => {
 			}
 		});
 	});
-	socket.on('disconnect', (data) => {
-		socket.broadcast.emit('user disconnected', data);
+	socket.on('disconnect', () => {
+		socket.broadcast.emit('user disconnected', user);
 	});
 });
 
